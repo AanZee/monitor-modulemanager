@@ -1,0 +1,23 @@
+{
+  "name": "monitor-modulemanager",
+  "version": "0.1.0",
+  "description": "Manage all modules in Monitor and MonitorClient",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://aanzee.git.beanstalkapp.com/monitor-modulemanager.git"
+  },
+  "keywords": [],
+  "author": "Roy Peters",
+  "license": "ISC",
+  "dependencies": {
+    "cron-job-manager": "^1.0.6",
+    "debug": "^2.2.0",
+    "request": "^2.62.0",
+    "rootpath": "^0.1.2",
+    "time": "^0.11.4"
+  }
+}
