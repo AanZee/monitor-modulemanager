@@ -64,6 +64,36 @@ exports.registerRoutes = function (app)
     }
 }
 
+var postModuleDataCallback = function() {
+    var moduleDataString = JSON.stringify(moduleData);
+
+    if(moduleDataString != '{}') {
+
+        request({
+            method: 'POST',
+            url: monitorConf.moduleDataUrl,
+            form: {
+                moduledata: moduleDataString
+            },
+            headers: { 
+                clienttoken: monitorClient.token
+            }
+        },
+        function (err, response, data) {
+            if (!err && response.statusCode == 200) {
+                data = JSON.parse(data);
+                keys = data.data;
+                
+                // Delete keys in 'moduleData' object which already sent to / processed in Monitor
+                for (key of keys) {
+                    delete moduleData[key];
+                }
+            }
+        });
+
+    }
+}
+
 // Send all data in 'moduleData' object to the Monitor. afterward delete sent data in 'moduleData'
 exports.postModuleData = function() {
 
@@ -72,35 +102,7 @@ exports.postModuleData = function() {
     CJmanager.add(
         'postModuleDataToMonitor',
         cronTime,
-        function(){
-            var moduleDataString = JSON.stringify(moduleData);
-
-            if(moduleDataString != '{}') {
-
-                request({
-                    method: 'POST',
-                    url: monitorConf.moduleDataUrl,
-                    form: {
-                        moduledata: moduleDataString
-                    },
-                    headers: { 
-                        clienttoken: monitorClient.token
-                    }
-                },
-                function (err, response, data) {
-                    if (!err && response.statusCode == 200) {
-                        data = JSON.parse(data);
-                        keys = data.data;
-                        
-                        // Delete keys in 'moduleData' object which already sent to / processed in Monitor
-                        for (key of keys) {
-                            delete moduleData[key];
-                        }
-                    }
-                });
-
-            }
-        },
+        postModuleDataCallback,
         {
             start: true,
             timeZone: "Europe/Amsterdam"
