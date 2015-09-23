@@ -119,8 +119,8 @@ var executeCronCallBack = function(monitorModule) {
                 
                 data = {
                     moduleName: monitorModule.name, 
-                    monitorClientId: monitorClient._id,
-                    date: Date.now(),
+                    monitorClientId: monitorClient.id,
+                    date: Date.now() / 1000,
                     data: data
                 }
 
