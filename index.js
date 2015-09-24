@@ -89,6 +89,10 @@ var postModuleDataCallback = function() {
                     delete moduleData[key];
                 }
             }
+            else {
+                // console.log(typeof err, err.code);
+                // TODO: what to do? stop all cronjobs? restarting monitorClient?
+            }
         });
 
     }
