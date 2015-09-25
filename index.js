@@ -90,8 +90,12 @@ var postModuleDataCallback = function() {
                 }
             }
             else {
-                // console.log(typeof err, err.code);
-                // TODO: what to do? stop all cronjobs? restarting monitorClient?
+                debug('Can\'t reach the Monitor!!');
+                
+                // Is the monitor accessible after a time to be unattainable?
+                // Is the statusCode 413? Monitor can't handle the amount of data. Remove all moduleData in 'moduleData'.
+                if(response && response.statusCode == 413)
+                    moduleData = {};
             }
         });
 
