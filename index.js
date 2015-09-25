@@ -94,8 +94,10 @@ var postModuleDataCallback = function() {
                 
                 // Is the monitor accessible after a time to be unattainable?
                 // Is the statusCode 413? Monitor can't handle the amount of data. Remove all moduleData in 'moduleData'.
-                if(response && response.statusCode == 413)
+                if(response && response.statusCode == 413) {
+                    debug('Received statusCode 413. Monitor can\'t handle the amount of data. Remove all moduleData in \'moduleData\'.')
                     moduleData = {};
+                }
             }
         });
 
