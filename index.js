@@ -3,6 +3,7 @@ var CronJobManager = require('cron-job-manager');
 var CJmanager = new CronJobManager();
 var debug = require('debug')('monitorClient:moduleManager');
 var request = require('request');
+var socket = null;
 
 var modules = [];
 var moduleData = {};
@@ -31,11 +32,43 @@ exports.init = function(conf, servertype) {
                 debug('Initialising module: ' + moduleName);
                 module.name = moduleName;
                 module.config = config.getModuleConfig(moduleName);
+                module.monitorClient = monitorClient;
                 modules.push(module);
             }
         }
     }
 }
+
+function getModuleByName(moduleName){
+    for(var i = 0; i < modules.length; i++) {
+        if (modules[i].name == moduleName) {
+            return modules[i];
+            break;
+        }
+    }
+
+    return false;
+}
+
+exports.registerSockets = function (socketIO) {
+    socket = socketIO;
+
+    socket.on('moduleManager', function(data){
+        // Get right module
+        var monitorModule = getModuleByName(data.moduleName);
+        
+        if (monitorModule) {
+            // Execute right function with parameters
+            if (typeof monitorModule[data.params.command] == 'function'){ 
+                monitorModule[data.params.command](data, function(err, data){
+
+                    // Send callback back through socketIO
+                    // socket.emit('moduleManager', {});
+                });
+            }
+        }       
+    });
+};
 
 exports.registerRoutes = function (app)
 {
@@ -156,7 +189,7 @@ exports.registerCronjobs = function ()
             // Register the function 'monitorModule.executeCron' as a cron job
             debug('Registering ' + monitorModule.name + ' as cronjob.');
 
-            var cronTime = config.getModules()[monitorModule.name].cronTime || '* * */1 * * * *';
+            var cronTime = monitorModule.config.cronTime || '* * */1 * * * *';
 
             CJmanager.add(
                 monitorModule.name,
