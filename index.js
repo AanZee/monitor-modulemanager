@@ -53,17 +53,17 @@ function getModuleByName(moduleName){
 exports.registerSockets = function (socketIO) {
     socket = socketIO;
 
-    socket.on('moduleManager', function(data){
+    socket.on('moduleManager', function(data, callback){
         // Get right module
         var monitorModule = getModuleByName(data.moduleName);
         
         if (monitorModule) {
             // Execute right function with parameters
             if (typeof monitorModule[data.params.command] == 'function'){ 
-                monitorModule[data.params.command](data, function(err, data){
+                monitorModule[data.params.command](data, function(data){
 
                     // Send callback back through socketIO
-                    // socket.emit('moduleManager', {});
+                    callback(data);
                 });
             }
         }       
