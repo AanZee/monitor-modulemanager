@@ -147,8 +147,8 @@ exports.postModuleData = function() {
         cronTime,
         postModuleDataCallback,
         {
-            start: true,
-            timeZone: "Europe/Amsterdam"
+            start: true
+            //timeZone: "Europe/Amsterdam"
         }
     );
 
@@ -196,8 +196,8 @@ exports.registerCronjobs = function ()
                 cronTime,
                 executeCronCallBack(monitorModule),
                 {
-                    start: true,
-                    timeZone: "Europe/Amsterdam"
+                    start: true
+                    //timeZone: "Europe/Amsterdam"
                 }
             );
         }
