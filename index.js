@@ -13,7 +13,7 @@ var monitorConf = null;
 var moduleNames = null;
 var monitorClient = null;
 
-exports.init = function(conf) {
+exports.init = function(conf, db) {
 	config = conf;
 	moduleNames = config.getModulesToInstall();
 
@@ -35,8 +35,8 @@ exports.init = function(conf) {
 				module.config = config.getModuleConfig(moduleName);
 				module.monitorClient = monitorClient;
 
-				if(moduleName.init)
-					moduleName.init();
+				if(module.init)
+					module.init(db);
 
 				modules.push(module);
 			}
