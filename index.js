@@ -1,7 +1,7 @@
 var fs = require('fs');
 var CronJobManager = require('cron-job-manager');
 var CJmanager = new CronJobManager();
-var debug = require('debug')('monitorClient:moduleManager');
+var debug = require('debug');
 var request = require('request');
 var socket = null;
 
@@ -13,6 +13,9 @@ var monitorConf = null;
 var moduleNames = null;
 var monitorClient = null;
 
+// serverType 'monitor' may require database tables
+var monitorModuleTables = [];
+
 exports.init = function(conf, db) {
 	config = conf;
 	moduleNames = config.getModulesToInstall();
@@ -20,7 +23,11 @@ exports.init = function(conf, db) {
 	if (config.serverType == 'monitorClient') {
 		monitorConf = config.monitor();
 		monitorClient = config.monitorClient();
-	};
+
+		debug = debug('monitorClient:moduleManager');
+	} else {
+		debug = debug('monitor:moduleManager');
+	}
 
 	for(var i = 0; i < moduleNames.length; i++) {
 		var moduleName = moduleNames[i];
@@ -38,10 +45,17 @@ exports.init = function(conf, db) {
 				if(module.init)
 					module.init(db);
 
+				if (config.serverType == 'monitor' && module.tables)
+					monitorModuleTables = monitorModuleTables.concat(module.tables);
+
 				modules.push(module);
 			}
 		}
 	}
+}
+
+exports.getMonitorModuleTables = function(){
+	return monitorModuleTables
 }
 
 function getModuleByName(moduleName){
@@ -102,7 +116,7 @@ exports.registerRoutes = function (app)
 	}
 }
 
-var postModuleDataCallback = function() {
+var postModuleDataCallback = function(callback) {
 	var moduleDataString = JSON.stringify(moduleData);
 
 	if(moduleDataString != '{}') {
@@ -127,9 +141,7 @@ var postModuleDataCallback = function() {
 					keys = data.data;
 					
 					// Delete keys in 'moduleData' object which already sent to / processed in Monitor
-					for (key of keys) {
-						delete moduleData[key];
-					}
+					deleteModuleDataKeys(keys);
 				}
 				else {
 					debug('Can\'t reach the Monitor!!');
@@ -145,20 +157,30 @@ var postModuleDataCallback = function() {
 
 		} else {
 			// serverType == monitor -> directly save moduleData
+			callback(moduleData, function(keys){
+				deleteModuleDataKeys(keys);
+			});
 		}
 
 	}
 }
 
+// Delete keys in 'moduleData' object which already sent to / processed in Monitor
+function deleteModuleDataKeys(keys) {
+	for (key of keys) {
+		delete moduleData[key];
+	}
+};
+
 // Send all data in 'moduleData' object to the Monitor. afterward delete sent data in 'moduleData'
-exports.postModuleData = function() {
+exports.postModuleData = function(callback) {
 
 	var cronTime = '* */1 * * * * *'; // Every second
 
 	CJmanager.add(
 		'postModuleDataToMonitor',
 		cronTime,
-		postModuleDataCallback,
+		function() { postModuleDataCallback(callback); },
 		{
 			start: true
 			//timeZone: "Europe/Amsterdam"
@@ -169,7 +191,7 @@ exports.postModuleData = function() {
 
 var executeCronCallBack = function(monitorModule) {
 	return function(error) {
-		monitorModule.executeCron(function(err, data){
+		monitorModule.executeCron(function(err, callbackData){
 			if(err)
 				debug(err);
 			else {
@@ -177,9 +199,17 @@ var executeCronCallBack = function(monitorModule) {
 				
 				data = {
 					moduleName: monitorModule.name, 
-					monitorClientId: monitorClient.id,
-					date: Date.now(),
-					data: data
+					date: Date.now()
+				}
+
+				// Add 'monitorClientId' and 'data' to data object for servertype 'monitorClient' moduleData
+				// data from modules in serverType 'monitor' will already give an object with predefined 'monitorClientId' and 'data'
+				if( ! callbackData.monitorClientId) {
+					data.monitorClientId = monitorClient.id;
+					data.data = callbackData;
+				} else {
+					data.monitorClientId = callbackData.monitorClientId;
+					data.data = callbackData.data;
 				}
 
 				if(monitorModule.snapshotData)
