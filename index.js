@@ -55,7 +55,7 @@ exports.init = function(conf, db) {
 }
 
 exports.getMonitorModuleTables = function(){
-	return monitorModuleTables
+	return monitorModuleTables;
 }
 
 function getModuleByName(moduleName){
@@ -192,7 +192,7 @@ exports.postModuleData = function(callback) {
 var executeCronCallBack = function(monitorModule) {
 	return function(error) {
 		debug(monitorModule.name, ' cron executed on: ', Date.now());
-		
+
 		monitorModule.executeCron(function(err, callbackData){
 			if(err)
 				debug(err);
