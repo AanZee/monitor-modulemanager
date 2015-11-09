@@ -191,12 +191,13 @@ exports.postModuleData = function(callback) {
 
 var executeCronCallBack = function(monitorModule) {
 	return function(error) {
+		debug(monitorModule.name, ' cron executed on: ', Date.now());
+		
 		monitorModule.executeCron(function(err, callbackData){
 			if(err)
 				debug(err);
-			else {
-				debug(monitorModule.name, ' cron executed on: ', Date.now());
-				
+			
+			else {			
 				data = {
 					moduleName: monitorModule.name, 
 					date: Date.now()
