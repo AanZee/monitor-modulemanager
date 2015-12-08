@@ -48,6 +48,10 @@ exports.init = function(conf, db) {
 				if (config.serverType == 'monitor' && module.tables)
 					monitorModuleTables = monitorModuleTables.concat(module.tables);
 
+				// Add snapshotData property to module config (for sending to Monitor)
+				if (module.snapshotData)
+					config.config.modules[module.name].snapshotData = true;
+
 				modules.push(module);
 			}
 		}
