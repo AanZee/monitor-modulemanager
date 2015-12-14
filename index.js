@@ -13,6 +13,10 @@ var monitorConf = null;
 var moduleNames = null;
 var monitorClient = null;
 
+// Prevent that the moduleManager can send moduleData more than once
+var postingModuleData = false;
+var postingModuleDataTimestamp = null;
+
 // serverType 'monitor' may require database tables
 var monitorModuleTables = [];
 
@@ -121,49 +125,61 @@ exports.registerRoutes = function (app)
 }
 
 var postModuleDataCallback = function(callback) {
-	var moduleDataString = JSON.stringify(moduleData);
+	// Check if postModuleDataCallback isn't already busy with sending moduleData
+	// In case of no response, there is an additional check been built on a timestamp
+	if( ! postingModuleData || Date.now() > postingModuleDataTimestamp) {
 
-	if(moduleDataString != '{}') {
+		var moduleDataString = JSON.stringify(moduleData);
 
-		if (config.serverType == "monitorClient") {
+		// moduleData isn't empty? Start sending.
+		if(moduleDataString != '{}') {
+
+			postingModuleData = true; // Prevent that the moduleManager can send moduleData more than once
+			postingModuleDataTimestamp = new Date().setMinutes(new Date().getMinutes() + 1); // Sending data again after a minut no response
+
 			// Send moduleData through POST HTTP request to monitor
-
-			request({
-				method: 'POST',
-				url: monitorConf.moduleDataUrl,
-				form: {
-					moduledata: moduleDataString
-				},
-				headers: { 
-					clienttoken: monitorClient.token
-				}
-			},
-			function (err, response, data) {
-				if (!err && response.statusCode == 200) {
-
-					data = JSON.parse(data);
-					keys = data.data;
-					
-					// Delete keys in 'moduleData' object which already sent to / processed in Monitor
-					deleteModuleDataKeys(keys);
-				}
-				else {
-					debug('Can\'t reach the Monitor!!');
-					
-					// Is the monitor accessible after a time to be unattainable?
-					// Is the statusCode 413? Monitor can't handle the amount of data. Remove all moduleData in 'moduleData'.
-					if(response && response.statusCode == 413) {
-						debug('Received statusCode 413. Monitor can\'t handle the amount of data. Remove all moduleData in \'moduleData\'.')
-						moduleData = {};
+			if (config.serverType == "monitorClient") {
+				request({
+					method: 'POST',
+					url: monitorConf.moduleDataUrl,
+					form: {
+						moduledata: moduleDataString
+					},
+					headers: { 
+						clienttoken: monitorClient.token
 					}
-				}
-			});
+				},
+				function (err, response, data) {
+					if (!err && response.statusCode == 200) {
 
-		} else {
-			// serverType == monitor -> directly save moduleData
-			callback(moduleData, function(keys){
-				deleteModuleDataKeys(keys);
-			});
+						data = JSON.parse(data);
+						keys = data.data;
+						
+						// Delete keys in 'moduleData' object which already sent to / processed in Monitor
+						deleteModuleDataKeys(keys);
+					}
+					else {
+						debug('Can\'t reach the Monitor!!');
+						
+						// Is the monitor accessible after a time to be unattainable?
+						// Is the statusCode 413? Monitor can't handle the amount of data. Remove all moduleData in 'moduleData'.
+						if(response && response.statusCode == 413) {
+							debug('Received statusCode 413. Monitor can\'t handle the amount of data. Remove all moduleData in \'moduleData\'.')
+							moduleData = {};
+						}
+					}
+
+					postingModuleData = false; // Reset postingModuleData
+				});
+
+			} else {
+				// serverType == monitor -> directly save moduleData
+				callback(moduleData, function(keys){
+					deleteModuleDataKeys(keys);
+					postingModuleData = false; // Reset postingModuleData
+				});
+			}
+
 		}
 
 	}
