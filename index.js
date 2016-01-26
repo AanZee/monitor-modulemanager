@@ -20,8 +20,9 @@ var postingModuleDataTimestamp = null;
 // serverType 'monitor' may require database tables
 var monitorModuleTables = [];
 
-// This function will be only executed in Monitor Clients. Preparing config for registering to Monitor
-exports.prepareMonitorClientConfig = function(conf){
+// Preparing config for registering to Monitor
+// Prepare config for Monitor modules
+exports.prepareConfig = function(conf){
 	config = conf;
 	moduleNames = config.getModulesToInstall();
 
@@ -34,7 +35,7 @@ exports.prepareMonitorClientConfig = function(conf){
 
 			if(module.isMonitoringModule) {
 
-				// Add snapshotData property to module config (for sending to Monitor)
+				// Add snapshotData property to module config
 				if (module.snapshotData)
 					config.config.modules[moduleName].snapshotData = true;
 
@@ -75,7 +76,7 @@ exports.init = function(conf, db) {
 				if (config.serverType == 'monitor' && module.tables)
 					monitorModuleTables = monitorModuleTables.concat(module.tables);
 
-				// // Add snapshotData property to module config (for sending to Monitor)
+				// // Add snapshotData property to module config
 				// if (module.snapshotData)
 				// 	config.config.modules[module.name].snapshotData = true;
 
