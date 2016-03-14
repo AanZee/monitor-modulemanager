@@ -184,6 +184,11 @@ var postModuleDataCallback = function(callback) {
 					}
 					else {
 						debug('Can\'t reach the Monitor!!');
+
+						// Fix for possible memory leak, delete moduleData if 'Can't reach the Monitor API' & 'moduleData is bigger than 1MB'
+						if(moduleDataString.length > 1000000) { //1mb
+							moduleData = {};
+						}
 						
 						// Is the monitor accessible after a time to be unattainable?
 						// Is the statusCode 413? Monitor can't handle the amount of data. Remove all moduleData in 'moduleData'.
@@ -213,7 +218,9 @@ var postModuleDataCallback = function(callback) {
 function deleteModuleDataKeys(keys) {
 	if(keys instanceof Array && keys.length > 0) {
 		
-		for (key of keys) {
+		for(var i = 0, iMax = keys.length; i < iMax; i += 1) {
+			var key = keys[i];
+
 			if(moduleData[key]) {
 				delete moduleData[key];
 			}
