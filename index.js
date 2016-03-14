@@ -26,7 +26,7 @@ exports.prepareConfig = function(conf){
 	config = conf;
 	moduleNames = config.getModulesToInstall();
 
-	for(var i = 0; i < moduleNames.length; i++) {
+	for(var i = 0, iMax = moduleNames.length; i < iMax; i += 1) {
 		var moduleName = moduleNames[i];
 		var exists = fs.existsSync('./node_modules/' + moduleName + '/index.js');
 
@@ -57,7 +57,7 @@ exports.init = function(conf, db) {
 		debug = debug('monitor:moduleManager');
 	}
 
-	for(var i = 0; i < moduleNames.length; i++) {
+	for(var i = 0, iMax = moduleNames.length; i < iMax; i += 1) {
 		var moduleName = moduleNames[i];
 		var exists = fs.existsSync('./node_modules/' + moduleName + '/index.js');
 
@@ -91,7 +91,7 @@ exports.getMonitorModuleTables = function(){
 }
 
 function getModuleByName(moduleName){
-	for(var i = 0; i < modules.length; i++) {
+	for(var i = 0, iMax = modules.length; i < iMax; i += 1) {
 		if (modules[i].name == moduleName) {
 			return modules[i];
 			break;
@@ -117,13 +117,13 @@ exports.registerSockets = function (socketIO) {
 					callback(data);
 				});
 			}
-		}       
+		}
 	});
 };
 
 exports.registerRoutes = function (app)
 {
-	for(var i = 0; i < modules.length; i++) {
+	for(var i = 0, iMax = modules.length; i < iMax; i += 1) {
 		var monitorModule = modules[i];
 
 		// =================================================================
@@ -133,7 +133,7 @@ exports.registerRoutes = function (app)
 			var routes = monitorModule.getRoutes();
 			debug('Asking ' + monitorModule.name + ' for routes. Found: ' + routes.length + ' routes');
 
-			for(var j = 0; j < routes.length; j++) {
+			for(var j = 0, jMax = routes.length; j < jMax; j += 1) {
 				var route = routes[j];
 				var method = route.method.toLowerCase();
 
@@ -177,7 +177,7 @@ var postModuleDataCallback = function(callback) {
 					if (!err && response.statusCode == 200) {
 
 						data = JSON.parse(data);
-						keys = data.data;
+						var keys = data.data;
 						
 						// Delete keys in 'moduleData' object which already sent to / processed in Monitor
 						deleteModuleDataKeys(keys);
@@ -211,8 +211,14 @@ var postModuleDataCallback = function(callback) {
 
 // Delete keys in 'moduleData' object which already sent to / processed in Monitor
 function deleteModuleDataKeys(keys) {
-	for (key of keys) {
-		delete moduleData[key];
+	if(keys instanceof Array && keys.length > 0) {
+		
+		for (key of keys) {
+			if(moduleData[key]) {
+				delete moduleData[key];
+			}
+		}
+
 	}
 };
 
@@ -270,7 +276,7 @@ var executeCronCallBack = function(monitorModule) {
 
 exports.registerCronjobs = function ()
 {
-	for(var i = 0; i < modules.length; i++) {
+	for(var i = 0, iMax = modules.length; i < iMax; i += 1) {
 		var monitorModule = modules[i];
 
 		if(monitorModule.hasCron) {
